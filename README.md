@@ -2,6 +2,18 @@
 
 A local, open-source data lake and analytics UI for the City of Chicago "Crimes - 2001 to Present" dataset. Ingestion runs on demand against the Socrata SODA API and stores a partitioned Parquet lake on disk. The Dash app reads only the local Parquet lake.
 
+## Dashboard overview
+
+The Dash analytics UI provides:
+- Time series trends by day or week
+- Top primary crime types
+- Day-of-week vs hour-of-day heatmap
+- Interactive map with automatic downsampling
+- Arrest rate by primary type
+- Filter controls for date range, primary type, district, and arrest/domestic flags
+
+![Chicago Crime dashboard](images/chicago_crime.png)
+
 ## Setup (local)
 
 ```bash
