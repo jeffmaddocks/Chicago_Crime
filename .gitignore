@@ -8,6 +8,7 @@ __pycache__/
 .env.*
 *.egg-info/
 __pycache__/
+.DS_Store
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
