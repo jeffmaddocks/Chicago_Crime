@@ -1,0 +1,12 @@
+dash>=2.14
+plotly>=5.18
+pandas>=2.1
+duckdb>=0.10
+pyarrow>=14
+requests>=2.31
+python-dotenv>=1.0
+tenacity>=8.2
+pytest>=7.4
+
+[dev]
+pytest>=7.4

@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: chicago_crime
+Version: 0.1.0
+Summary: Chicago crime data ingestion and analytics
+Requires-Python: >=3.11
+Requires-Dist: dash>=2.14
+Requires-Dist: plotly>=5.18
+Requires-Dist: pandas>=2.1
+Requires-Dist: duckdb>=0.10
+Requires-Dist: pyarrow>=14
+Requires-Dist: requests>=2.31
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: tenacity>=8.2
+Requires-Dist: pytest>=7.4
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
