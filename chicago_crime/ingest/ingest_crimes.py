@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import shutil
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -61,6 +62,14 @@ def _get_query_start(settings, lake_glob: str, full_backfill: bool) -> datetime:
 
 def ingest_once(full_backfill: bool = False) -> IngestState:
     settings = get_settings()
+    if full_backfill:
+        logger.info("Full backfill enabled; clearing lake, staging, and ingest state.")
+        if settings.lake_dir.exists():
+            shutil.rmtree(settings.lake_dir)
+        if settings.staging_dir.exists():
+            shutil.rmtree(settings.staging_dir)
+        if settings.state_path.exists():
+            settings.state_path.unlink()
     settings.lake_dir.mkdir(parents=True, exist_ok=True)
     settings.staging_dir.mkdir(parents=True, exist_ok=True)
 
