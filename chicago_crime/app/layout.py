@@ -15,7 +15,10 @@ def create_layout() -> html.Div:
                             html.H1("Chicago Crime Analytics"),
                             html.Div(
                                 [
-                                    dcc.Graph(id="map", style={"gridColumn": "1 / -1"}),
+                                    dcc.Graph(
+                                        id="map",
+                                        style={"gridColumn": "1 / -1", "height": "900px"},
+                                    ),
                                     dcc.Graph(id="time-series"),
                                     dcc.Graph(id="top-types"),
                                     dcc.Graph(id="top-community"),

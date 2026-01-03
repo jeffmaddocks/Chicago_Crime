@@ -16,7 +16,7 @@ def filter_panel() -> html.Div:
         default_end = datetime.now(timezone.utc)
     else:
         default_end = max_date
-    default_start = default_end - timedelta(days=30)
+    default_start = default_end - timedelta(days=365)
     if min_date and default_start < min_date:
         default_start = min_date
 
