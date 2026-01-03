@@ -2,6 +2,8 @@
 
 A local, open-source data lake and analytics UI for the City of Chicago "Crimes - 2001 to Present" dataset. Ingestion runs on demand against the Socrata SODA API and stores a partitioned Parquet lake on disk. The Dash app reads only the local Parquet lake.
 
+This repository was almost entirely generated with ChatGPT. An initial [prompt](prompts/entries/2026-01-03-session.md) handled the basic setup, and AI was used to troubleshoot/resolve errors, with only slight tweaks made manually.
+
 ## Dashboard overview
 
 The Dash analytics UI provides:
