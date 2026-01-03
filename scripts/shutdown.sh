@@ -7,6 +7,9 @@ step() {
   echo "[shutdown] $1"
 }
 
-step "Stopping Docker containers"
+step "Stopping legacy Dash containers (if any)"
 cd "$ROOT_DIR"
 docker compose down || true
+
+step "Stopping Superset containers (if any)"
+docker compose -f docker-compose.superset.yml down || true

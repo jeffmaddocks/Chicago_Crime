@@ -15,17 +15,3 @@ services:
     volumes:
       - ./data:/app/data
     command: ["python", "scripts/run_app.py"]
-
-  chicago_crime_ingest:
-    image: chicago_crime_ingest:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    environment:
-      - DATA_DIR=/app/data
-    volumes:
-      - ./data:/app/data
-    command: ["python", "-m", "chicago_crime.ingest.ingest_crimes", "--once"]
-    profiles: ["ingest"]

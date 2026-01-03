@@ -16,6 +16,34 @@ The Dash analytics UI provides:
 
 ![Chicago Crime dashboard](images/chicago_crime.png)
 
+## Recommended: Superset (BI)
+
+Superset is the recommended BI layer. Ingest stays on the host (venv), and Superset runs in Docker with a read-only mount of the local lake.
+
+Venv-first ingest + DuckDB bridge:
+
+```bash
+cp .env.example .env
+make install
+make ingest
+make dims
+make duckdb
+```
+
+Start Superset (Docker-only):
+
+```bash
+cp .env.superset.example .env.superset
+make superset-up
+```
+
+Open http://localhost:8088 (default `admin` / `admin`), then add a database:
+
+- SQLAlchemy URI: `duckdb:////data/lake/chicago_crime.duckdb`
+- Datasets (views): `crimes`, `crimes_enriched`, `community_areas`, `population`, `acs_demographics`
+
+Superset sees the lake at `/data` via a read-only mount.
+
 ## Setup (local)
 
 ```bash
@@ -28,7 +56,7 @@ cp .env.example .env
 Run a one-off ingest:
 
 ```bash
-python -m chicago_crime.ingest.ingest_crimes --once
+make ingest
 ```
 
 Full backfill (re-fetch from `START_DATE` and rebuild affected partitions):
@@ -46,17 +74,17 @@ START_DATE=2001-01-01 caffeinate -s python -m chicago_crime.ingest.ingest_crimes
 Run the Dash app:
 
 ```bash
-python scripts/run_app.py
+make app
 ```
 
-Startup/shutdown helpers (Docker-first):
+Startup/shutdown helpers (venv-first ingest):
 
 ```bash
 ./scripts/startup.sh
 ./scripts/shutdown.sh
 ```
 
-## Docker workflow
+## Legacy Dash (Docker)
 
 Build images:
 
@@ -68,24 +96,6 @@ Run the app:
 
 ```bash
 docker compose up
-```
-
-Run ingest on demand:
-
-```bash
-docker compose run --rm chicago_crime_ingest
-```
-
-Optional loop mode for ingest:
-
-```bash
-CHI_INGEST_LOOP=1 CHI_INGEST_INTERVAL_HOURS=24 docker compose run --rm chicago_crime_ingest
-```
-
-To force a full backfill in Docker:
-
-```bash
-docker compose run --rm chicago_crime_ingest --full-backfill
 ```
 
 For production scheduling, run the ingest command from the host (cron, systemd timers, GitHub Actions runner) and keep the `data/` directory persistent.
@@ -150,7 +160,7 @@ Queries left-join these dims onto crimes using `TRY_CAST(c.community_area AS INT
 To refresh all dims:
 
 ```bash
-python scripts/ingest_dims.py --force
+make dims
 ```
 
 ## Map modes

@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  superset:
+    build:
+      context: .
+      dockerfile: superset/Dockerfile
+    container_name: superset
+    env_file:
+      - .env.superset
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset_home:/app/superset_home
+      - ./data:/data:ro
+      - ./superset/superset-init.sh:/app/superset-init.sh:ro
+    depends_on:
+      - superset_db
+      - superset_redis
+    command: ["/bin/bash", "-lc", "/app/superset-init.sh && /app/.venv/bin/superset run -h 0.0.0.0 -p 8088"]
+
+  superset_db:
+    image: postgres:15
+    container_name: superset_db
+    environment:
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_DB: superset
+    volumes:
+      - superset_db:/var/lib/postgresql/data
+
+  superset_redis:
+    image: redis:7
+    container_name: superset_redis
+
+volumes:
+  superset_home:
+  superset_db:

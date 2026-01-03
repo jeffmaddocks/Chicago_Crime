@@ -2,6 +2,7 @@
 data/
 .env
 .env.*
+.env.superset
 __pycache__/
 *.pyc
 .env

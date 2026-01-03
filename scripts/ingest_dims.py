@@ -8,26 +8,19 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    import argparse
-    import os
-
-    parser = argparse.ArgumentParser(description="Ingest all dimension datasets")
-    parser.add_argument("--force", action="store_true", help="Force refresh of cached dims")
-    parser.add_argument("--max-age-days", type=int, default=None, help="Override max age for cached dims")
-    args = parser.parse_args()
-
-    setup_logging(os.getenv("LOG_LEVEL", "INFO"))
-    force = args.force or os.getenv("FORCE", "0") == "1"
-
-    for name, func in (
-        ("community areas", ensure_community_areas_dim),
-        ("population", ensure_population_dim),
-        ("ACS demographics", ensure_acs_demographics_dim),
-    ):
-        try:
-            func(force=force, max_age_days=args.max_age_days)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("%s dim ingest failed: %s", name, exc)
+    setup_logging()
+    try:
+        ensure_community_areas_dim()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Community area dim ingest failed: %s", exc)
+    try:
+        ensure_population_dim()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Population dim ingest failed: %s", exc)
+    try:
+        ensure_acs_demographics_dim()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("ACS demographics dim ingest failed: %s", exc)
 
 
 if __name__ == "__main__":
