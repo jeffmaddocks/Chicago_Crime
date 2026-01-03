@@ -36,6 +36,8 @@ make duckdb
 step "Starting Superset (Docker)"
 if command -v docker >/dev/null 2>&1; then
   make superset-up
+  step "Building Superset DuckDB bridge (container paths)"
+  make duckdb-superset
 else
   echo "[startup] WARNING: docker not found in PATH; skipping Superset startup"
 fi

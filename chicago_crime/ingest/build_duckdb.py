@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 from pathlib import Path
 
 import duckdb
@@ -16,20 +17,20 @@ def _duckdb_path(settings) -> Path:
     return settings.lake_dir.parent / "chicago_crime.duckdb"
 
 
-def _lake_glob(settings) -> str:
-    return str(settings.lake_dir / "**" / "*.parquet")
+def _lake_glob(data_dir: Path) -> str:
+    return str(data_dir / "lake" / "crimes" / "**" / "*.parquet")
 
 
-def _community_areas_path(settings) -> Path:
-    return settings.data_dir / "dim" / "community_areas" / "community_areas.parquet"
+def _community_areas_path(data_dir: Path) -> Path:
+    return data_dir / "dim" / "community_areas" / "community_areas.parquet"
 
 
-def _population_path(settings) -> Path:
-    return settings.population_dim_path
+def _population_path(data_dir: Path) -> Path:
+    return data_dir / "dim" / "population" / "community_area_population.parquet"
 
 
-def _acs_path(settings) -> Path:
-    return settings.acs_dim_path
+def _acs_path(data_dir: Path) -> Path:
+    return data_dir / "dim" / "acs_demographics" / "acs_demographics.parquet"
 
 
 def _escape_path(path: str) -> str:
@@ -58,6 +59,18 @@ def build_duckdb(rebuild: bool = False) -> Path:
     settings = get_settings()
     setup_logging(settings.log_level)
 
+    view_data_dir = Path(os.getenv("DUCKDB_DATA_DIR", str(settings.data_dir)))
+    if view_data_dir != settings.data_dir:
+        if view_data_dir.exists():
+            logger.info("Using DUCKDB_DATA_DIR for view paths: %s", view_data_dir)
+        else:
+            logger.warning(
+                "DUCKDB_DATA_DIR %s does not exist; falling back to %s",
+                view_data_dir,
+                settings.data_dir,
+            )
+            view_data_dir = settings.data_dir
+
     lake_files = list(settings.lake_dir.rglob("*.parquet"))
     if not lake_files:
         raise ValueError(f"No parquet files found under {settings.lake_dir}")
@@ -69,7 +82,7 @@ def build_duckdb(rebuild: bool = False) -> Path:
 
     con = duckdb.connect(str(db_path))
 
-    lake_glob = _escape_path(_lake_glob(settings))
+    lake_glob = _escape_path(_lake_glob(view_data_dir))
     con.execute(
         f"CREATE OR REPLACE VIEW crimes AS SELECT * FROM read_parquet('{lake_glob}')"
     )
@@ -78,23 +91,26 @@ def build_duckdb(rebuild: bool = False) -> Path:
     population_cols: set[str] | None = None
     acs_cols: set[str] | None = None
 
-    community_path = _community_areas_path(settings)
-    if community_path.exists():
-        community_cols = _create_parquet_view(con, "community_areas", community_path)
+    community_source_path = _community_areas_path(settings.data_dir)
+    community_view_path = _community_areas_path(view_data_dir)
+    if community_source_path.exists():
+        community_cols = _create_parquet_view(con, "community_areas", community_view_path)
     else:
-        logger.info("Community areas dim not found at %s", community_path)
+        logger.info("Community areas dim not found at %s", community_source_path)
 
-    population_path = _population_path(settings)
-    if population_path.exists():
-        population_cols = _create_parquet_view(con, "population", population_path)
+    population_source_path = _population_path(settings.data_dir)
+    population_view_path = _population_path(view_data_dir)
+    if population_source_path.exists():
+        population_cols = _create_parquet_view(con, "population", population_view_path)
     else:
-        logger.info("Population dim not found at %s", population_path)
+        logger.info("Population dim not found at %s", population_source_path)
 
-    acs_path = _acs_path(settings)
-    if acs_path.exists():
-        acs_cols = _create_parquet_view(con, "acs_demographics", acs_path)
+    acs_source_path = _acs_path(settings.data_dir)
+    acs_view_path = _acs_path(view_data_dir)
+    if acs_source_path.exists():
+        acs_cols = _create_parquet_view(con, "acs_demographics", acs_view_path)
     else:
-        logger.info("ACS demographics dim not found at %s", acs_path)
+        logger.info("ACS demographics dim not found at %s", acs_source_path)
 
     joins = []
     select_parts = ["c.*"]

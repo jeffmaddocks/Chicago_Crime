@@ -8,7 +8,7 @@ db_uri="${SQLALCHEMY_DATABASE_URI:-postgresql+psycopg2://superset:superset@super
 redis_host="${REDIS_HOST:-superset_redis}"
 redis_port="${REDIS_PORT:-6379}"
 
-read -r db_host db_port <<<"$(python - "$db_uri" <<'PY'
+read -r db_host db_port <<<"$("$PY_BIN" - "$db_uri" <<'PY'
 import sys
 from urllib.parse import urlparse
 
@@ -25,7 +25,7 @@ wait_for() {
   local port="$2"
   local name="$3"
   for _ in $(seq 1 60); do
-    if python - <<'PY' "$host" "$port"
+    if "$PY_BIN" - <<'PY' "$host" "$port"
 import socket
 import sys
 

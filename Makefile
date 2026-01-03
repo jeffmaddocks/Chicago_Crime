@@ -17,6 +17,13 @@ dims:
 duckdb:
 	$(BIN)/python -m chicago_crime.ingest.build_duckdb --rebuild
 
+duckdb-superset:
+	docker compose -f docker-compose.superset.yml build superset
+	docker run --rm \
+		-v $(PWD)/data:/data:rw \
+		-v $(PWD)/superset/build_duckdb_container.py:/app/build_duckdb_container.py:ro \
+		chicago_crime-superset /app/.venv/bin/python /app/build_duckdb_container.py --rebuild
+
 app:
 	$(BIN)/python scripts/run_app.py
 

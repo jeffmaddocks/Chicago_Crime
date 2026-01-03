@@ -20,7 +20,7 @@ The Dash analytics UI provides:
 
 Superset is the recommended BI layer. Ingest stays on the host (venv), and Superset runs in Docker with a read-only mount of the local lake.
 
-Venv-first ingest + DuckDB bridge:
+### Setup Ingest (host venv)
 
 ```bash
 cp .env.example .env
@@ -30,19 +30,42 @@ make dims
 make duckdb
 ```
 
-Start Superset (Docker-only):
+### Setup Superset (Docker)
 
 ```bash
 cp .env.superset.example .env.superset
 make superset-up
+make duckdb-superset
 ```
+
+The `make duckdb-superset` target:
+1. Builds the Superset image (including duckdb-engine, pyarrow)
+2. Runs `build_duckdb_container.py` inside a container with a **writable** `/data` mount
+3. Builds DuckDB views that Superset can query via the read-only `/data` mount
+
+### Connect Superset to DuckDB
 
 Open http://localhost:8088 (default `admin` / `admin`), then add a database:
 
-- SQLAlchemy URI: `duckdb:////data/lake/chicago_crime.duckdb`
-- Datasets (views): `crimes`, `crimes_enriched`, `community_areas`, `population`, `acs_demographics`
+- **Type**: DuckDB
+- **SQLAlchemy URI**: `duckdb:////data/lake/chicago_crime.duckdb?read_only=true`
 
-Superset sees the lake at `/data` via a read-only mount.
+Available datasets (views):
+- `crimes`
+- `crimes_enriched`
+- `community_areas`
+- `population`
+- `acs_demographics`
+
+### Re-ingest and sync DuckDB
+
+After running new data ingest or updating dimensions on the host:
+
+```bash
+make duckdb-superset
+```
+
+This rebuilds the DuckDB views inside the container so Superset sees the latest data.
 
 ## Setup (local)
 
@@ -203,7 +226,32 @@ The SODA API enforces rate limits. Set `SODA_APP_TOKEN` to increase throughput. 
 
 ## Troubleshooting
 
+### Dash / Ingest
+
 - **Empty UI**: run ingest first and verify `data/lake/crimes/` contains Parquet files.
 - **Map too dense**: the app automatically downsamples if the range is large or points exceed `MAX_MAP_POINTS`.
 - **Choropleth missing**: ensure `data/dim/community_areas/community_areas.geojson` exists by running the dimension ingest.
 - **No ingest state**: `data/state/ingest_state.json` is written after a successful ingest.
+
+### Superset
+
+**Verify containers are running**:
+```bash
+docker compose -f docker-compose.superset.yml ps
+```
+
+**Verify DuckDB bridge was built**:
+```bash
+make duckdb-superset
+ls -la data/lake/chicago_crime.duckdb
+```
+
+**If Superset shows no data**:
+1. Confirm the SQLAlchemy URI includes `?read_only=true`
+2. Re-run `make duckdb-superset` to rebuild DuckDB views
+3. Refresh the Superset dataset to pick up the latest schema
+
+**If Superset container fails on startup**:
+- Check logs: `make superset-logs`
+- Ensure `/data` directory exists on the host
+- Ensure ingest has run at least once (`make ingest` on the host)
