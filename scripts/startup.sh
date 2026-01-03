@@ -33,6 +33,14 @@ make dims
 step "Building DuckDB bridge via venv"
 make duckdb
 
+step "Starting Superset (Docker)"
+if command -v docker >/dev/null 2>&1; then
+  make superset-up
+else
+  echo "[startup] WARNING: docker not found in PATH; skipping Superset startup"
+fi
+
 step "Next steps:"
 echo "  Superset: make superset-up (http://localhost:8088)"
+echo "  Superset URL: http://localhost:8088"
 echo "  Legacy Dash: make app OR docker compose up chicago_crime_app"
