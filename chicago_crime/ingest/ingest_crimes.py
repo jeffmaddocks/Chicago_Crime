@@ -44,7 +44,9 @@ def _normalize_records(records: list[dict]) -> pd.DataFrame:
     return df
 
 
-def _get_query_start(settings, lake_glob: str) -> datetime:
+def _get_query_start(settings, lake_glob: str, full_backfill: bool) -> datetime:
+    if full_backfill:
+        return settings.start_date
     max_date = get_max_date_from_lake(lake_glob)
     backfill = timedelta(days=settings.backfill_days)
     if max_date is None:
@@ -57,13 +59,13 @@ def _get_query_start(settings, lake_glob: str) -> datetime:
     return query_start
 
 
-def ingest_once() -> IngestState:
+def ingest_once(full_backfill: bool = False) -> IngestState:
     settings = get_settings()
     settings.lake_dir.mkdir(parents=True, exist_ok=True)
     settings.staging_dir.mkdir(parents=True, exist_ok=True)
 
     lake_glob = str(settings.lake_dir / "**" / "*.parquet")
-    query_start = _get_query_start(settings, lake_glob)
+    query_start = _get_query_start(settings, lake_glob, full_backfill)
 
     client = SodaClient()
     records: list[dict] = []
@@ -100,9 +102,9 @@ def ingest_once() -> IngestState:
     return state
 
 
-def _loop_ingest(interval_hours: int) -> None:
+def _loop_ingest(interval_hours: int, full_backfill: bool) -> None:
     while True:
-        ingest_once()
+        ingest_once(full_backfill=full_backfill)
         time.sleep(interval_hours * 3600)
 
 
@@ -110,6 +112,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Ingest Chicago crime data")
     parser.add_argument("--once", action="store_true", help="Run one ingest and exit")
     parser.add_argument("--loop", action="store_true", help="Run ingest loop")
+    parser.add_argument(
+        "--full-backfill",
+        action="store_true",
+        help="Ignore existing max date and start from START_DATE",
+    )
     args = parser.parse_args()
 
     settings = get_settings()
@@ -119,9 +126,9 @@ def main() -> None:
     interval_hours = int(os.getenv("CHI_INGEST_INTERVAL_HOURS", "24"))
 
     if args.loop or loop_env:
-        _loop_ingest(interval_hours)
+        _loop_ingest(interval_hours, full_backfill=args.full_backfill)
     else:
-        ingest_once()
+        ingest_once(full_backfill=args.full_backfill)
 
 
 if __name__ == "__main__":

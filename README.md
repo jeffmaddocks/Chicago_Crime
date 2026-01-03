@@ -31,6 +31,12 @@ Run a one-off ingest:
 python -m chicago_crime.ingest.ingest_crimes --once
 ```
 
+Full backfill (re-fetch from `START_DATE` and rebuild affected partitions):
+
+```bash
+python -m chicago_crime.ingest.ingest_crimes --once --full-backfill
+```
+
 Run the Dash app:
 
 ```bash
@@ -68,6 +74,12 @@ Optional loop mode for ingest:
 
 ```bash
 CHI_INGEST_LOOP=1 CHI_INGEST_INTERVAL_HOURS=24 docker compose run --rm chicago_crime_ingest
+```
+
+To force a full backfill in Docker:
+
+```bash
+docker compose run --rm chicago_crime_ingest --full-backfill
 ```
 
 For production scheduling, run the ingest command from the host (cron, systemd timers, GitHub Actions runner) and keep the `data/` directory persistent.

@@ -2,6 +2,10 @@
 data/
 .env
 .env.*
+__pycache__/
+*.pyc
+.env
+.env.*
 *.egg-info/
 __pycache__/
 *.py[cod]
