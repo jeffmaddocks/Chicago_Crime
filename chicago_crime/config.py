@@ -46,6 +46,13 @@ class Settings:
     community_area_number_field: str
     community_area_name_field: str
     dim_max_age_days: int
+    acs_most_recent_dataset_id: str
+    acs_multiyear_dataset_id: str
+    use_acs_multiyear: bool
+    acs_community_area_field: str | None
+    acs_year_field: str | None
+    acs_population_field: str | None
+    acs_dim_max_age_days: int
     map_mode_default: str
     choropleth_metric_default: str
 
@@ -60,6 +67,14 @@ class Settings:
     @property
     def staging_dir(self) -> Path:
         return self.data_dir / "staging"
+
+    @property
+    def population_dim_path(self) -> Path:
+        return self.data_dir / "dim" / "population" / "community_area_population.parquet"
+
+    @property
+    def acs_dim_path(self) -> Path:
+        return self.data_dir / "dim" / "acs_demographics" / "acs_demographics.parquet"
 
 
 _SETTINGS: Settings | None = None
@@ -95,6 +110,13 @@ def get_settings() -> Settings:
         community_area_number_field=os.getenv("COMMUNITY_AREA_NUMBER_FIELD", "area_num_1"),
         community_area_name_field=os.getenv("COMMUNITY_AREA_NAME_FIELD", "community"),
         dim_max_age_days=int(os.getenv("DIM_MAX_AGE_DAYS", "30")),
+        acs_most_recent_dataset_id=os.getenv("ACS_MOST_RECENT_DATASET_ID", "7umk-8dtw"),
+        acs_multiyear_dataset_id=os.getenv("ACS_MULTIYEAR_DATASET_ID", "t68z-cikk"),
+        use_acs_multiyear=os.getenv("USE_ACS_MULTIYEAR", "0") == "1",
+        acs_community_area_field=os.getenv("ACS_COMMUNITY_AREA_FIELD") or None,
+        acs_year_field=os.getenv("ACS_YEAR_FIELD") or None,
+        acs_population_field=os.getenv("ACS_POPULATION_FIELD") or None,
+        acs_dim_max_age_days=int(os.getenv("ACS_DIM_MAX_AGE_DAYS", "30")),
         map_mode_default=os.getenv("MAP_MODE_DEFAULT", "choropleth"),
         choropleth_metric_default=os.getenv("CHOROPLETH_METRIC_DEFAULT", "count"),
     )

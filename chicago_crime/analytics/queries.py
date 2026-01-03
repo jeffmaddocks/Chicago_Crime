@@ -31,14 +31,39 @@ def _community_dim_exists() -> bool:
     return (settings.data_dir / "dim" / "community_areas" / "community_areas.parquet").exists()
 
 
+def _population_dim_path() -> str:
+    settings = get_settings()
+    return str(settings.population_dim_path)
+
+
+def _population_dim_exists() -> bool:
+    settings = get_settings()
+    return settings.population_dim_path.exists()
+
+
+def _acs_dim_path() -> str:
+    settings = get_settings()
+    return str(settings.acs_dim_path)
+
+
+def _acs_dim_exists() -> bool:
+    settings = get_settings()
+    return settings.acs_dim_path.exists()
+
+
 def _base_from_clause() -> tuple[str, list]:
+    clause = "FROM read_parquet(?) AS c"
+    params: list = [_lake_glob()]
     if _community_dim_exists():
-        return (
-            "FROM read_parquet(?) AS c LEFT JOIN read_parquet(?) AS ca "
-            "ON TRY_CAST(c.community_area AS INTEGER) = ca.community_area",
-            [_lake_glob(), _community_dim_path()],
-        )
-    return "FROM read_parquet(?) AS c", [_lake_glob()]
+        clause += " LEFT JOIN read_parquet(?) AS ca ON TRY_CAST(c.community_area AS INTEGER) = ca.community_area"
+        params.append(_community_dim_path())
+    if _population_dim_exists():
+        clause += " LEFT JOIN read_parquet(?) AS pop ON TRY_CAST(c.community_area AS INTEGER) = pop.community_area"
+        params.append(_population_dim_path())
+    if _acs_dim_exists():
+        clause += " LEFT JOIN read_parquet(?) AS acs ON TRY_CAST(c.community_area AS INTEGER) = acs.community_area"
+        params.append(_acs_dim_path())
+    return clause, params
 
 
 def _community_area_name_expr() -> str:
@@ -124,7 +149,18 @@ def filter_crimes(
     clause, params = _build_filters(date_start, date_end, primary_types, district, arrest, domestic)
     con = duckdb.connect()
     from_clause, base_params = _base_from_clause()
-    select_list = "c.*, ca.community_area_name" if _community_dim_exists() else "c.*, NULL AS community_area_name"
+    select_parts = ["c.*"]
+    if _community_dim_exists():
+        select_parts.append("ca.community_area_name AS community_area_name")
+    else:
+        select_parts.append("NULL AS community_area_name")
+    if _population_dim_exists():
+        select_parts.append("pop.population AS population")
+    else:
+        select_parts.append("NULL AS population")
+    if _acs_dim_exists():
+        select_parts.append("acs.* EXCLUDE (community_area)")
+    select_list = ", ".join(select_parts)
     query = f"SELECT {select_list} {from_clause} {clause}"
     df = con.execute(query, base_params + params).fetchdf()
     con.close()

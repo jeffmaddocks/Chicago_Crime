@@ -127,6 +127,32 @@ python -m chicago_crime.ingest.ingest_dimensions --force
 
 The choropleth joins crimes to boundaries via `feature["id"]` derived from the `area_num_1` property and matches it to `community_area`.
 
+## ACS population + demographics dims
+
+The ingest pipeline can cache population and ACS demographic fields (by community area) from the Chicago Data Portal:
+
+- Most recent year: `7umk-8dtw`
+- Multi-year: `t68z-cikk` (optional, keep latest year per area)
+
+Cached dim files:
+
+```
+data/
+  dim/
+    population/
+      community_area_population.parquet
+    acs_demographics/
+      acs_demographics.parquet
+```
+
+Queries left-join these dims onto crimes using `TRY_CAST(c.community_area AS INTEGER) = dim.community_area`.
+
+To refresh all dims:
+
+```bash
+python scripts/ingest_dims.py --force
+```
+
 ## Map modes
 
 The dashboard supports an auto mode that chooses points for small ranges and choropleth for larger ranges. You can manually switch between points and choropleth in the sidebar controls.
@@ -151,6 +177,13 @@ Environment variables (see `.env.example`):
 - `COMMUNITY_AREA_NUMBER_FIELD` (default `area_num_1`)
 - `COMMUNITY_AREA_NAME_FIELD` (default `community`)
 - `DIM_MAX_AGE_DAYS` (default `30`)
+- `ACS_MOST_RECENT_DATASET_ID` (default `7umk-8dtw`)
+- `ACS_MULTIYEAR_DATASET_ID` (default `t68z-cikk`)
+- `USE_ACS_MULTIYEAR` (default `0`, use `1` to keep only latest year per area)
+- `ACS_COMMUNITY_AREA_FIELD` (override inferred community area field)
+- `ACS_YEAR_FIELD` (override inferred year field)
+- `ACS_POPULATION_FIELD` (override inferred population field)
+- `ACS_DIM_MAX_AGE_DAYS` (default `30`)
 - `MAP_MODE_DEFAULT` (default `auto`)
 - `CHOROPLETH_METRIC_DEFAULT` (default `count`)
 
