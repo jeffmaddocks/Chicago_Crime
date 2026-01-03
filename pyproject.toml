@@ -22,8 +22,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
 
-[tool.setuptools]
-packages = ["chicago_crime"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["chicago_crime*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

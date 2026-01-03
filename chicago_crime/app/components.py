@@ -37,6 +37,7 @@ def filter_panel() -> html.Div:
                 end_date=default_end.date() if default_end else None,
                 min_date_allowed=min_date.date() if min_date else None,
                 max_date_allowed=max_date.date() if max_date else None,
+                updatemode="singledate",
             ),
             html.Label("Primary type"),
             dcc.Dropdown(
@@ -88,6 +89,7 @@ def filter_panel() -> html.Div:
             "padding": "1rem",
             "background": "#f5f7fb",
             "borderRight": "1px solid #e0e0e0",
-            "minWidth": "208px",
+            "minWidth": "166px",
+            "width": "166px",
         },
     )

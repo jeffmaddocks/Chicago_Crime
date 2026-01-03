@@ -49,6 +49,8 @@ def _get_query_start(settings, lake_glob: str) -> datetime:
     backfill = timedelta(days=settings.backfill_days)
     if max_date is None:
         return settings.start_date
+    if settings.backfill_days <= 0:
+        return max_date + timedelta(seconds=1)
     query_start = max_date - backfill
     if settings.start_date:
         query_start = max(query_start, settings.start_date)
