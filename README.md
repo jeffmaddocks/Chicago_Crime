@@ -37,6 +37,12 @@ Full backfill (re-fetch from `START_DATE` and rebuild affected partitions):
 python -m chicago_crime.ingest.ingest_crimes --once --full-backfill
 ```
 
+If you want to pin a start date and keep the process running while your Mac is locked:
+
+```bash
+START_DATE=2001-01-01 caffeinate -s python -m chicago_crime.ingest.ingest_crimes --once --full-backfill
+```
+
 Run the Dash app:
 
 ```bash
